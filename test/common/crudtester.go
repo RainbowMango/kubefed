@@ -560,10 +560,12 @@ func (c *FederatedTypeCrudTester) waitForResource(client util.ResourceClient, qu
 			// Validate that the expected override was applied
 			if len(expectedOverrides) > 0 {
 				expectedClusterObject := clusterObj.DeepCopy()
+				c.tl.Fatalf("expectedClusterObject before apply overrides: %s", expectedClusterObject.MarshalJSON())
 				// Applying overrides on copy of received cluster object should not change the cluster object if the overrides are properly applied.
 				if err := util.ApplyJsonPatch(expectedClusterObject, expectedOverrides); err != nil {
 					c.tl.Fatalf("Failed to apply json patch: %v", err)
 				}
+				c.tl.Fatalf("expectedClusterObject after apply overrides: %s", expectedClusterObject.MarshalJSON())
 
 				expectedClusterObjectJSON, err := expectedClusterObject.MarshalJSON()
 				if err != nil {
