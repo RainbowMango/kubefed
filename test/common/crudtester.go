@@ -590,6 +590,8 @@ func (c *FederatedTypeCrudTester) waitForResource(client util.ResourceClient, qu
 					c.tl.Errorf("Cluster object is not as expected. expected: %s, actual: %s", expectedClusterObjectJSON, clusterObjectJSON)
 					return false, nil
 				}
+				c.tl.Errorf("[JUSTFORDEBUG] specifically trigger failed.")
+				return false, nil
 			}
 
 			return true, nil
