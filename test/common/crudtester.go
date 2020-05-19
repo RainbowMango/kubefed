@@ -363,6 +363,8 @@ func (c *FederatedTypeCrudTester) CheckDelete(fedObject *unstructured.Unstructur
 
 // CheckPropagation checks propagation for the crud tester's clients
 func (c *FederatedTypeCrudTester) CheckPropagation(fedObject *unstructured.Unstructured) {
+	c.tl.Errorf("[JUSTFORDEBUG]: start CheckPropagation")
+
 	federatedKind := c.typeConfig.GetFederatedType().Kind
 	qualifiedName := util.NewQualifiedName(fedObject)
 
@@ -403,6 +405,7 @@ func (c *FederatedTypeCrudTester) CheckPropagation(fedObject *unstructured.Unstr
 		c.tl.Logf("Waiting for %s %q %s cluster %q", targetKind, targetName, operation, clusterName)
 
 		if objExpected {
+			c.tl.Errorf("[JUSTFORDEBUG]: start wait for resource, target name: %v, overrideMap: %v", targetName, overridesMap)
 			err := c.waitForResource(testCluster.Client, targetName, overridesMap[clusterName], func() string {
 				version, _ := c.expectedVersion(qualifiedName, templateVersion, overrideVersion, clusterName)
 				return version
