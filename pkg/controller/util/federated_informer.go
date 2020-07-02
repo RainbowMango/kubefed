@@ -142,6 +142,7 @@ func NewFederatedInformer(
 	triggerFunc func(pkgruntime.Object),
 	clusterLifecycle *ClusterLifecycleHandlerFuncs) (FederatedInformer, error) {
 
+	// 为每个member集群创建一个Controller
 	targetInformerFactory := func(cluster *fedv1b1.KubeFedCluster, clusterConfig *restclient.Config) (cache.Store, cache.Controller, error) {
 		resourceClient, err := NewResourceClient(clusterConfig, apiResource)
 		if err != nil {
@@ -152,6 +153,7 @@ func NewFederatedInformer(
 		return store, controller, nil
 	}
 
+	// federated informer：多个informer的聚合体
 	federatedInformer := &federatedInformerImpl{
 		targetInformerFactory: targetInformerFactory,
 		configFactory: func(cluster *fedv1b1.KubeFedCluster) (*restclient.Config, error) {
@@ -165,7 +167,7 @@ func NewFederatedInformer(
 			restclient.AddUserAgent(clusterConfig, userAgentName)
 			return clusterConfig, nil
 		},
-		targetInformers: make(map[string]informer),
+		targetInformers: make(map[string]informer), // 使用map存储多个informer
 		fedNamespace:    config.KubeFedNamespace,
 		clusterClients:  make(map[string]generic.Client),
 	}

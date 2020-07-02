@@ -113,7 +113,7 @@ func (w *asyncWorker) EnqueueWithDelay(qualifiedName QualifiedName, delay time.D
 
 func (w *asyncWorker) Run(stopChan <-chan struct{}) {
 	StartBackoffGC(w.backoff, stopChan)
-	w.deliverer.StartWithHandler(func(item *DelayingDelivererItem) {
+	w.deliverer.StartWithHandler(func(item *DelayingDelivererItem) { // 启动消息接收，把所有接收到的对象存放到queue中。
 		w.queue.Add(item)
 	})
 	go wait.Until(w.worker, w.timing.Interval, stopChan)

@@ -325,6 +325,7 @@ func (c *Controller) startSyncController(tc *corev1b1.FederatedTypeConfig) error
 	}
 
 	stopChan := make(chan struct{})
+	// 为某个FederatedTypeConfig类型资源创建Controller，比如customresourcedefinitions.apiextensions.k8s.io
 	err := synccontroller.StartKubeFedSyncController(c.controllerConfig, stopChan, ftc, fedNamespaceAPIResource)
 	if err != nil {
 		close(stopChan)

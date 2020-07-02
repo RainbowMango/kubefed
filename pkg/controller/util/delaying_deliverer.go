@@ -98,17 +98,17 @@ func NewDelayingDelivererWithChannel(targetChannel chan *DelayingDelivererItem) 
 }
 
 // Deliver all items due before or equal to timestamp.
-func (d *DelayingDeliverer) deliver(timestamp time.Time) {
+func (d *DelayingDeliverer) deliver(timestamp time.Time) { // 每次把到期的数据全部发送后退出
 	for d.heap.Len() > 0 {
-		if timestamp.Before(d.heap.data[0].DeliveryTime) {
+		if timestamp.Before(d.heap.data[0].DeliveryTime) { // 时间还未到，不发送
 			return
 		}
-		item := heap.Pop(d.heap).(*DelayingDelivererItem)
+		item := heap.Pop(d.heap).(*DelayingDelivererItem) // 时间已到，从堆中Pop一个发送到指定管道
 		d.targetChannel <- item
 	}
 }
 
-func (d *DelayingDeliverer) run() {
+func (d *DelayingDeliverer) run() { // 持续发送
 	for {
 		now := time.Now()
 		d.deliver(now)
@@ -122,14 +122,14 @@ func (d *DelayingDeliverer) run() {
 		select {
 		case <-time.After(sleepTime):
 			break // just wake up and process the data
-		case item := <-d.updateChannel:
-			if position, found := d.heap.keyPosition[item.Key]; found {
+		case item := <-d.updateChannel: // 数据发送时间有变化
+			if position, found := d.heap.keyPosition[item.Key]; found { // 如果数据还未发送，且此次更新发送时间更超时，则修改发送时间
 				if item.DeliveryTime.Before(d.heap.data[position].DeliveryTime) {
 					d.heap.data[position] = item
 					heap.Fix(d.heap, position)
 				}
 				// Ignore if later.
-			} else {
+			} else { // 如果数据已经发送，则直接推入
 				heap.Push(d.heap, item)
 			}
 		case <-d.stopChannel:
@@ -149,6 +149,7 @@ func (d *DelayingDeliverer) Stop() {
 }
 
 // Delivers value at the given time.
+// 每次发送数据到updateChannel。
 func (d *DelayingDeliverer) DeliverAt(key string, value interface{}, deliveryTime time.Time) {
 	d.updateChannel <- &DelayingDelivererItem{
 		Key:          key,
@@ -163,11 +164,13 @@ func (d *DelayingDeliverer) DeliverAfter(key string, value interface{}, delay ti
 }
 
 // Gets target channel of the deliverer.
+// 消费者获取管道
 func (d *DelayingDeliverer) GetTargetChannel() chan *DelayingDelivererItem {
 	return d.targetChannel
 }
 
 // Starts Delaying deliverer with a handler listening on the target channel.
+// 消费者只提供处理函数，不关心管道，这是最常用的方式。
 func (d *DelayingDeliverer) StartWithHandler(handler func(*DelayingDelivererItem)) {
 	go func() {
 		for {
