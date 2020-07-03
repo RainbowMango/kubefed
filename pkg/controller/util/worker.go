@@ -153,7 +153,7 @@ func (w *asyncWorker) worker() {
 
 		item := obj.(*DelayingDelivererItem)
 		qualifiedName := item.Value.(*QualifiedName)
-		status := w.reconcile(*qualifiedName)
+		status := w.reconcile(*qualifiedName) // 会不会这里会卡住？（如果有个member集群执行失败）
 		w.queue.Done(item)
 
 		switch status {

@@ -234,6 +234,7 @@ func (s *KubeFedSyncController) reconcileOnClusterChange() {
 
 func (s *KubeFedSyncController) reconcile(qualifiedName util.QualifiedName) util.ReconciliationStatus {
 	if !s.isSynced() {
+		runtime.HandleError(errors.Errorf("can not reconcile %s yet, since informers still not synced.", qualifiedName.String()))
 		return util.StatusNotSynced
 	}
 
