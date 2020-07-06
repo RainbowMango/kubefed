@@ -309,7 +309,7 @@ func (c *Controller) startSyncController(tc *corev1b1.FederatedTypeConfig) error
 	// to it not being possible to limit its scope.
 
 	ftc := tc.DeepCopyObject().(*corev1b1.FederatedTypeConfig)
-	kind := ftc.Spec.FederatedType.Kind
+	kind := ftc.Spec.FederatedType.Kind // 联邦类型，如FederatedCustomResourceDefinition
 
 	// A sync controller for a namespaced resource must be supplied
 	// with the ftc for namespaces so that it can consider federated
@@ -325,7 +325,7 @@ func (c *Controller) startSyncController(tc *corev1b1.FederatedTypeConfig) error
 	}
 
 	stopChan := make(chan struct{})
-	// 为某个FederatedTypeConfig类型资源创建Controller，比如customresourcedefinitions.apiextensions.k8s.io
+	// 为某个FederatedTypeConfig类型资源创建Controller，比如FederatedCustomResourceDefinition
 	err := synccontroller.StartKubeFedSyncController(c.controllerConfig, stopChan, ftc, fedNamespaceAPIResource)
 	if err != nil {
 		close(stopChan)

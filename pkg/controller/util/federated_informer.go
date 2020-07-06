@@ -105,7 +105,7 @@ type RegisteredClustersView interface {
 // when a cluster is either put offline of deleted. It is assumed that
 // some controller keeps an eye on the cluster list and thus the
 // clusters in ETCD are up to date.
-type FederatedInformer interface {
+type FederatedInformer interface { // 用于监控注册集群中的资源
 	RegisteredClustersView
 
 	// Returns a store created over all stores from target informers.
@@ -155,8 +155,8 @@ func NewFederatedInformer(
 
 	// federated informer：多个informer的聚合体
 	federatedInformer := &federatedInformerImpl{
-		targetInformerFactory: targetInformerFactory,
-		configFactory: func(cluster *fedv1b1.KubeFedCluster) (*restclient.Config, error) {
+		targetInformerFactory: targetInformerFactory, // 生成informer的方法
+		configFactory: func(cluster *fedv1b1.KubeFedCluster) (*restclient.Config, error) { // 生成config的方法
 			clusterConfig, err := BuildClusterConfig(cluster, client, config.KubeFedNamespace)
 			if err != nil {
 				return nil, err
@@ -169,7 +169,7 @@ func NewFederatedInformer(
 		},
 		targetInformers: make(map[string]informer), // 使用map存储多个informer
 		fedNamespace:    config.KubeFedNamespace,
-		clusterClients:  make(map[string]generic.Client),
+		clusterClients:  make(map[string]generic.Client), // 存储多个cluster的客户端
 	}
 
 	getClusterData := func(name string) []interface{} {
@@ -185,7 +185,7 @@ func NewFederatedInformer(
 	federatedInformer.clusterInformer.store, federatedInformer.clusterInformer.controller, err = NewGenericInformerWithEventHandler(
 		config.KubeConfig,
 		config.KubeFedNamespace,
-		&fedv1b1.KubeFedCluster{},
+		&fedv1b1.KubeFedCluster{}, // FederatedInformer只关心KubeFedCluster, 当新的集群加入时，为该集群创建informer，当集群删除时相应地也要删除informer.
 		clusterSyncPeriod,
 		&cache.ResourceEventHandlerFuncs{
 			DeleteFunc: func(old interface{}) {
@@ -251,7 +251,7 @@ func NewFederatedInformer(
 	return federatedInformer, err
 }
 
-func IsClusterReady(clusterStatus *fedv1b1.KubeFedClusterStatus) bool {
+func IsClusterReady(clusterStatus *fedv1b1.KubeFedClusterStatus) bool { // 判断当前Cluster是否ready，只要有ClusterReady Condition就算OK。
 	for _, condition := range clusterStatus.Conditions {
 		if condition.Type == fedcommon.ClusterReady {
 			if condition.Status == apiv1.ConditionTrue {
@@ -435,7 +435,7 @@ func (f *federatedInformerImpl) ClustersSynced() bool {
 }
 
 // Adds the given cluster to federated informer.
-func (f *federatedInformerImpl) addCluster(cluster *fedv1b1.KubeFedCluster) {
+func (f *federatedInformerImpl) addCluster(cluster *fedv1b1.KubeFedCluster) { // 将一个member集群添加到federated informer.
 	f.Lock()
 	defer f.Unlock()
 	name := cluster.Name
@@ -452,6 +452,7 @@ func (f *federatedInformerImpl) addCluster(cluster *fedv1b1.KubeFedCluster) {
 			stopChan:   make(chan struct{}),
 		}
 		f.targetInformers[name] = targetInformer
+		// TODO(RainbowMango): Should check if target API group exist in cluster
 		go targetInformer.controller.Run(targetInformer.stopChan)
 	} else {
 		// TODO: create also an event for cluster.
@@ -549,7 +550,7 @@ func (fs *federatedStoreImpl) ClustersSynced(clusters []*fedv1b1.KubeFedCluster)
 		fs.federatedInformer.Lock()
 		defer fs.federatedInformer.Unlock()
 
-		if len(fs.federatedInformer.targetInformers) != len(clusters) {
+		if len(fs.federatedInformer.targetInformers) != len(clusters) { // 确保member集群个数等于informer个数（）
 			return false, []informer{}
 		}
 		informersToCheck := make([]informer, 0, len(clusters))
