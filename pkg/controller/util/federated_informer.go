@@ -216,7 +216,7 @@ func NewFederatedInformer(
 					return
 				}
 
-				gvk := schema.GroupVersionKind{Group: apiResource.Group, Version: apiResource.Version, Kind: apiResource.Version}
+				gvk := schema.GroupVersionKind{Group: apiResource.Group, Version: apiResource.Version, Kind: apiResource.Kind}
 				curClusterConfig, err := BuildClusterConfig(curCluster, client, config.KubeFedNamespace)
 				if err != nil {
 					klog.Errorf("Cluster %v/%v not added; build cluster config error: %v.", curCluster.Namespace, curCluster.Name, err)
