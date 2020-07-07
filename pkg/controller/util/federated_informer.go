@@ -294,9 +294,7 @@ func IsClusterContainsAPI(clusterConfig *restclient.Config, gvk schema.GroupVers
 		return false
 	}
 
-	klog.Infof("[JUSTFORDEBUG], group version: %s, resources length: %d", resourceList.GroupVersion, len(resourceList.APIResources))
 	for _, resource := range resourceList.APIResources {
-		klog.Infof("[JUSTFORDEBUG] resource: %v", resource)
 		if resource.Kind == gvk.Kind {
 			return true
 		}
