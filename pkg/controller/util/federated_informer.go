@@ -27,6 +27,8 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	pkgruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog"
@@ -214,6 +216,17 @@ func NewFederatedInformer(
 					return
 				}
 
+				gvk := schema.GroupVersionKind{Group: apiResource.Group, Version: apiResource.Version, Kind: apiResource.Version}
+				curClusterConfig, err := BuildClusterConfig(curCluster, client, config.KubeFedNamespace)
+				if err != nil {
+					klog.Errorf("Cluster %v/%v not added; build cluster config error: %v.", curCluster.Namespace, curCluster.Name, err)
+					return
+				}
+				if !IsClusterContainsAPI(curClusterConfig, gvk) {
+					klog.Errorf("Cluster %v/%v not added; cluster API not support: %v.", curCluster.Namespace, curCluster.Name, gvk.String())
+					return
+				}
+
 				federatedInformer.addCluster(curCluster)
 				klog.Infof("Cluster %v/%v is ready", curCluster.Namespace, curCluster.Name)
 				if clusterLifecycle.ClusterAvailable != nil {
@@ -264,6 +277,29 @@ func IsClusterReady(clusterStatus *fedv1b1.KubeFedClusterStatus) bool {
 			}
 		}
 	}
+	return false
+}
+
+// IsClusterContainsAPI checks if the specific has installed the API.
+func IsClusterContainsAPI(clusterConfig *restclient.Config, gvk schema.GroupVersionKind) bool {
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(clusterConfig)
+	if err != nil {
+		klog.Errorf("Failed to create discovery client: %v", err)
+		return false
+	}
+
+	groups, err := discoveryClient.ServerGroups()
+	if err != nil {
+		klog.Errorf("Failed to get server API groups: %v", err)
+		return false
+	}
+
+	for index := range groups.Groups {
+		if groups.Groups[index].GroupVersionKind() == gvk {
+			return true
+		}
+	}
+
 	return false
 }
 
