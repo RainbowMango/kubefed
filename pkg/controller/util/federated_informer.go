@@ -297,7 +297,7 @@ func IsClusterContainsAPI(clusterConfig *restclient.Config, gvk schema.GroupVers
 	klog.Infof("[JUSTFORDEBUG] kind: %s, apiVersion: %s, groups length: %d", groups.Kind, groups.APIVersion, len(groups.Groups))
 	for index := range groups.Groups {
 		klog.Infof("current group version kind: %s", groups.Groups[index].GroupVersionKind().String())
-		if groups.Groups[index].GroupVersionKind() == gvk {
+		if groups.Groups[index].GroupVersionKind().String() == gvk.String() {
 			return true
 		}
 	}
