@@ -302,21 +302,6 @@ func IsClusterContainsAPI(clusterConfig *restclient.Config, gvk schema.GroupVers
 		}
 	}
 
-	groups, err := discoveryClient.ServerGroups()
-	if err != nil {
-		klog.Errorf("Failed to get server API groups: %v", err)
-		return false
-	}
-
-	klog.Infof("[JUSTFORDEBUG] kind: %s, apiVersion: %s, groups length: %d", groups.Kind, groups.APIVersion, len(groups.Groups))
-	for index := range groups.Groups {
-		klog.Infof("current group version kind: %s", groups.Groups[index].GroupVersionKind().String())
-		klog.Infof("current group %v", groups.Groups[index])
-		if groups.Groups[index].GroupVersionKind().String() == gvk.String() {
-			return true
-		}
-	}
-
 	return false
 }
 
