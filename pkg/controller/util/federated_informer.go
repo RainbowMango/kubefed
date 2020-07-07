@@ -288,6 +288,20 @@ func IsClusterContainsAPI(clusterConfig *restclient.Config, gvk schema.GroupVers
 		return false
 	}
 
+	resourceList, err := discoveryClient.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
+	if err != nil {
+		klog.Errorf("Failed to get resources for group version: %s, error: %v", gvk.GroupVersion().String(), err)
+		return false
+	}
+
+	klog.Infof("[JUSTFORDEBUG], group version: %s, resources length: %d", resourceList.GroupVersion, len(resourceList.APIResources))
+	for _, resource := range resourceList.APIResources {
+		klog.Infof("[JUSTFORDEBUG] resource: %v", resource)
+		if resource.Kind == gvk.Kind {
+			return true
+		}
+	}
+
 	groups, err := discoveryClient.ServerGroups()
 	if err != nil {
 		klog.Errorf("Failed to get server API groups: %v", err)
