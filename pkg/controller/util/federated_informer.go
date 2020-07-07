@@ -188,29 +188,36 @@ func NewFederatedInformer(
 		&cache.ResourceEventHandlerFuncs{
 			DeleteFunc: func(old interface{}) {
 				oldCluster, ok := old.(*fedv1b1.KubeFedCluster)
-				if ok {
-					var data []interface{}
-					if clusterLifecycle.ClusterUnavailable != nil {
-						data = getClusterData(oldCluster.Name)
-					}
-					federatedInformer.deleteCluster(oldCluster)
-					if clusterLifecycle.ClusterUnavailable != nil {
-						clusterLifecycle.ClusterUnavailable(oldCluster, data)
-					}
+				if !ok {
+					klog.Errorf("Cluster %v/%v not deleted; incorrect type", oldCluster.Namespace, oldCluster.Name)
+					return
+				}
+
+				var data []interface{}
+				if clusterLifecycle.ClusterUnavailable != nil {
+					data = getClusterData(oldCluster.Name)
+				}
+				federatedInformer.deleteCluster(oldCluster)
+				if clusterLifecycle.ClusterUnavailable != nil {
+					clusterLifecycle.ClusterUnavailable(oldCluster, data)
 				}
 			},
 			AddFunc: func(cur interface{}) {
 				curCluster, ok := cur.(*fedv1b1.KubeFedCluster)
 				if !ok {
 					klog.Errorf("Cluster %v/%v not added; incorrect type", curCluster.Namespace, curCluster.Name)
-				} else if IsClusterReady(&curCluster.Status) {
-					federatedInformer.addCluster(curCluster)
-					klog.Infof("Cluster %v/%v is ready", curCluster.Namespace, curCluster.Name)
-					if clusterLifecycle.ClusterAvailable != nil {
-						clusterLifecycle.ClusterAvailable(curCluster)
-					}
-				} else {
+					return
+				}
+
+				if !IsClusterReady(&curCluster.Status) {
 					klog.Infof("Cluster %v/%v not added; it is not ready.", curCluster.Namespace, curCluster.Name)
+					return
+				}
+
+				federatedInformer.addCluster(curCluster)
+				klog.Infof("Cluster %v/%v is ready", curCluster.Namespace, curCluster.Name)
+				if clusterLifecycle.ClusterAvailable != nil {
+					clusterLifecycle.ClusterAvailable(curCluster)
 				}
 			},
 			UpdateFunc: func(old, cur interface{}) {
