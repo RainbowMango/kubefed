@@ -22,6 +22,7 @@ spec:
       containers:
       - command:
         - /hyperfed/controller-manager
+        - "--v=8"
         image: "{{ .Values.repository }}/{{ .Values.image }}:{{ .Values.tag }}"
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: controller-manager
