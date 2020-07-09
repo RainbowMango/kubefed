@@ -206,16 +206,20 @@ func (s *KubeFedSyncController) isSynced() bool {
 	if !s.fedAccessor.HasSynced() {
 		// The fed accessor will have logged why sync is not yet
 		// complete.
+		klog.Warningf("[JUSTFORDEBUG]kubefed accessor not synced")
 		return false
 	}
 
 	// TODO(marun) set clusters as ready in the test fixture?
 	clusters, err := s.informer.GetReadyClusters()
+	clusterNames := make([]string, 0, len(clusters))
+	klog.Infof("[JUSTFORDEBUG]: Get all ready clusters: %v", strings.Join(clusterNames, `,`))
 	if err != nil {
 		runtime.HandleError(errors.Wrap(err, "Failed to get ready clusters"))
 		return false
 	}
 	if !s.informer.GetTargetStore().ClustersSynced(clusters) {
+		klog.Warningf("[JUSTFORDEBUG] Cluster not synced. clusters")
 		return false
 	}
 	return true
