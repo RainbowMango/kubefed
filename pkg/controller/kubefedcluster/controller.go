@@ -121,7 +121,7 @@ func newClusterController(config *util.ControllerConfig, clusterHealthCheckConfi
 		&fedv1b1.KubeFedCluster{},
 		util.NoResyncPeriod,
 		&cache.ResourceEventHandlerFuncs{
-			DeleteFunc: func(obj interface{}) {
+			DeleteFunc: func(obj interface{}) { // 集群unjoin时，从缓存中删除
 				castObj, ok := obj.(*fedv1b1.KubeFedCluster)
 				if !ok {
 					tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -137,11 +137,11 @@ func newClusterController(config *util.ControllerConfig, clusterHealthCheckConfi
 				}
 				cc.delFromClusterSet(castObj)
 			},
-			AddFunc: func(obj interface{}) {
+			AddFunc: func(obj interface{}) { // 集群join时，添加到缓存
 				castObj := obj.(*fedv1b1.KubeFedCluster)
 				cc.addToClusterSet(castObj)
 			},
-			UpdateFunc: func(oldObj, newObj interface{}) {
+			UpdateFunc: func(oldObj, newObj interface{}) { // 集群信息变化时，更新缓存
 				var clusterChanged bool
 				cluster := newObj.(*fedv1b1.KubeFedCluster)
 				cc.mu.Lock()
@@ -174,7 +174,7 @@ func (cc *ClusterController) delFromClusterSet(obj *fedv1b1.KubeFedCluster) {
 }
 
 // addToClusterSet creates a new client for the cluster and stores it in cluster data map.
-func (cc *ClusterController) addToClusterSet(obj *fedv1b1.KubeFedCluster) {
+func (cc *ClusterController) addToClusterSet(obj *fedv1b1.KubeFedCluster) { // 仅仅把新的cluster对象缓存起来，缓存的目地
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
 	clusterData := cc.clusterDataMap[obj.Name]
@@ -199,7 +199,7 @@ func (cc *ClusterController) Run(stopChan <-chan struct{}) {
 	go cc.clusterController.Run(stopChan)
 	// monitor cluster status periodically, in phase 1 we just get the health state from "/healthz"
 	go wait.Until(func() {
-		if err := cc.updateClusterStatus(); err != nil {
+		if err := cc.updateClusterStatus(); err != nil { // 周期性检查集群状态，必要时更新状态
 			klog.Errorf("Error monitoring cluster status: %v", err)
 		}
 	}, cc.clusterHealthCheckConfig.Period, stopChan)
@@ -219,7 +219,7 @@ func (cc *ClusterController) updateClusterStatus() error {
 		cluster := obj.DeepCopy()
 		clusterData := cc.clusterDataMap[cluster.Name]
 		cc.mu.RUnlock()
-		if clusterData == nil {
+		if clusterData == nil { // 什么时候会(clusterData == nil)？
 			// Retry adding cluster client
 			cc.addToClusterSet(cluster)
 			cc.mu.RLock()
