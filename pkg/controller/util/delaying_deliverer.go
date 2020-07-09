@@ -72,11 +72,11 @@ func (dh *delivererHeap) Pop() interface{} {
 // A structure that pushes the items to the target channel at a given time.
 type DelayingDeliverer struct {
 	// Channel to deliver the data when their time comes.
-	targetChannel chan *DelayingDelivererItem
+	targetChannel chan *DelayingDelivererItem // 数据最终出口
 	// Store for data
-	heap *delivererHeap
+	heap *delivererHeap // 使用小头堆来管理待发送事件，按待发送时间排序
 	// Channel to feed the main goroutine with updates.
-	updateChannel chan *DelayingDelivererItem
+	updateChannel chan *DelayingDelivererItem // 数据更新管道，有点类似于缓冲区，所有数据进来都经过该缓冲区，由该缓冲区再进入堆。（使用该管道的好处：堆中插入、取出数据可以不用锁，可以在同一个select语句中完成。）
 	// To stop the main goroutine.
 	stopChannel chan struct{}
 }
@@ -108,10 +108,10 @@ func (d *DelayingDeliverer) deliver(timestamp time.Time) { // 每次把到期的
 	}
 }
 
-func (d *DelayingDeliverer) run() { // 持续发送
+func (d *DelayingDeliverer) run() { // 检查堆顶数据发送时间，时间到了就把堆顶元素发送到targetChannel管道
 	for {
 		now := time.Now()
-		d.deliver(now)
+		d.deliver(now) // 发送堆顶元素到targetChannel管道
 
 		nextWakeUp := now.Add(time.Hour)
 		if d.heap.Len() > 0 {
@@ -120,9 +120,9 @@ func (d *DelayingDeliverer) run() { // 持续发送
 		sleepTime := nextWakeUp.Sub(now)
 
 		select {
-		case <-time.After(sleepTime):
+		case <-time.After(sleepTime): // 堆顶元素还未到发送时间，一直睡到发送时间
 			break // just wake up and process the data
-		case item := <-d.updateChannel: // 数据发送时间有变化
+		case item := <-d.updateChannel: // 新的数据到来（该数据可以已在堆中，也可能是新的）
 			if position, found := d.heap.keyPosition[item.Key]; found { // 如果数据还未发送，且此次更新发送时间更超时，则修改发送时间
 				if item.DeliveryTime.Before(d.heap.data[position].DeliveryTime) {
 					d.heap.data[position] = item

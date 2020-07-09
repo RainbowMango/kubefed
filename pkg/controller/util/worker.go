@@ -135,7 +135,7 @@ func (w *asyncWorker) SetDelay(retryDelay, clusterSyncDelay time.Duration) {
 // failure. Resets backoff if there was no failure.
 func (w *asyncWorker) deliver(qualifiedName QualifiedName, delay time.Duration, failed bool) {
 	key := qualifiedName.String()
-	if failed {
+	if failed { // 如果是失败的情况，delay时间会加长，避免无效的重试
 		w.backoff.Next(key, time.Now())
 		delay = delay + w.backoff.Get(key)
 	} else {

@@ -207,7 +207,7 @@ func startControllers(opts *options.Options, stopChan <-chan struct{}) {
 		}
 	}
 
-	if utilfeature.DefaultFeatureGate.Enabled(features.PushReconciler) {
+	if utilfeature.DefaultFeatureGate.Enabled(features.PushReconciler) { // 启动Push Reconciler
 		if err := federatedtypeconfig.StartController(opts.Config, stopChan); err != nil {
 			klog.Fatalf("Error starting federated type config controller: %v", err)
 		}
