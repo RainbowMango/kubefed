@@ -233,7 +233,9 @@ func (s *KubeFedSyncController) reconcileOnClusterChange() {
 }
 
 func (s *KubeFedSyncController) reconcile(qualifiedName util.QualifiedName) util.ReconciliationStatus {
+	klog.Infof("[JUSTFORDEBUG] reconcile, start reconcile, qualifiedName: %s", qualifiedName.String())
 	if !s.isSynced() {
+		klog.Infof("[JUSTFORDEBUG] reconcile, reconcile not start yet as informer not synced yet")
 		return util.StatusNotSynced
 	}
 
@@ -285,15 +287,18 @@ func (s *KubeFedSyncController) reconcile(qualifiedName util.QualifiedName) util
 // syncToClusters ensures that the state of the given object is
 // synchronized to member clusters.
 func (s *KubeFedSyncController) syncToClusters(fedResource FederatedResource) util.ReconciliationStatus {
+	klog.Infof("[JUSTFORDEBUG] syncToClusters, start sync, kind: %s", fedResource.TargetGVK().String())
 	clusters, err := s.informer.GetClusters()
 	if err != nil {
 		fedResource.RecordError(string(status.ClusterRetrievalFailed), errors.Wrap(err, "Failed to retrieve list of clusters"))
+		klog.Infof("[JUSTFORDEBUG] syncToClusters, failed to retrieve list of clusters, error: %v", err)
 		return s.setFederatedStatus(fedResource, status.ClusterRetrievalFailed, nil)
 	}
 
 	selectedClusterNames, err := fedResource.ComputePlacement(clusters)
 	if err != nil {
 		fedResource.RecordError(string(status.ComputePlacementFailed), errors.Wrap(err, "Failed to compute placement"))
+		klog.Infof("[JUSTFORDEBUG] syncToClusters, failed to compute placement, error: %v", err)
 		return s.setFederatedStatus(fedResource, status.ComputePlacementFailed, nil)
 	}
 
