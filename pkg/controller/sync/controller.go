@@ -213,12 +213,15 @@ func (s *KubeFedSyncController) isSynced() bool {
 	// TODO(marun) set clusters as ready in the test fixture?
 	clusters, err := s.informer.GetReadyClusters()
 	clusterNames := make([]string, 0, len(clusters))
+	for _, c := range clusters {
+		clusterNames = append(clusterNames, c.Name)
+	}
 	klog.Infof("[JUSTFORDEBUG]: Get all ready clusters: %v", strings.Join(clusterNames, `,`))
 	if err != nil {
 		runtime.HandleError(errors.Wrap(err, "Failed to get ready clusters"))
 		return false
 	}
-	if !s.informer.GetTargetStore().ClustersSynced(clusters) {
+	if !s.informer.GetTargetStore().ClustersSynced(clusters) { // 这里没ready!!!
 		klog.Warningf("[JUSTFORDEBUG] Cluster not synced. clusters")
 		return false
 	}

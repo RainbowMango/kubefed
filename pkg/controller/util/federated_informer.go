@@ -591,6 +591,7 @@ func (fs *federatedStoreImpl) ClustersSynced(clusters []*fedv1b1.KubeFedCluster)
 		defer fs.federatedInformer.Unlock()
 
 		if len(fs.federatedInformer.targetInformers) != len(clusters) {
+			klog.Warningf("[JUSTFORDEBUG] ClustersSynced, cluster number: %d, informer number: %d", len(clusters), len(fs.federatedInformer.targetInformers))
 			return false, []informer{}
 		}
 		informersToCheck := make([]informer, 0, len(clusters))
