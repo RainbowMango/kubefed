@@ -272,7 +272,7 @@ type federatedInformerImpl struct {
 	sync.Mutex
 
 	// Informer on federated clusters.
-	clusterInformer informer
+	clusterInformer informer // 缓存了所有的member cluster
 
 	// Target informers factory
 	targetInformerFactory TargetInformerFactory
