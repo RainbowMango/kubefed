@@ -592,14 +592,15 @@ func (fs *federatedStoreImpl) ClustersSynced(clusters []*fedv1b1.KubeFedCluster)
 
 		if len(fs.federatedInformer.targetInformers) != len(clusters) {
 			klog.Warningf("[JUSTFORDEBUG] ClustersSynced, cluster number: %d, informer number: %d", len(clusters), len(fs.federatedInformer.targetInformers))
-			return false, []informer{}
+			// return false, []informer{}
 		}
 		informersToCheck := make([]informer, 0, len(clusters))
 		for _, cluster := range clusters {
 			if targetInformer, found := fs.federatedInformer.targetInformers[cluster.Name]; found {
 				informersToCheck = append(informersToCheck, targetInformer)
 			} else {
-				return false, []informer{}
+				klog.Warningf("[JUSTFORDEBUG] ClustersSynced, cloud not find informer for cluster: %s", cluster.Name)
+				// return false, []informer{}
 			}
 		}
 		return true, informersToCheck
