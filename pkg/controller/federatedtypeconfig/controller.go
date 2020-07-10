@@ -98,7 +98,7 @@ func newController(config *util.ControllerConfig) (*Controller, error) {
 	c.store, c.controller, err = util.NewGenericInformer(
 		kubeConfig,
 		config.KubeFedNamespace,
-		&corev1b1.FederatedTypeConfig{},
+		&corev1b1.FederatedTypeConfig{}, // FederatedTypeConfig Controller监控FederatedTypeConfig配置，比如（FederatedDeployment、FederatedNamespace等资源类型）并为每种类型分别创建一个Controller.
 		util.NoResyncPeriod,
 		c.worker.EnqueueObject,
 	)
