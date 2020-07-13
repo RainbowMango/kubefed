@@ -94,8 +94,8 @@ func StartKubeFedStatusController(controllerConfig *util.ControllerConfig, stopC
 
 // newKubeFedStatusController returns a new status controller for the federated type
 func newKubeFedStatusController(controllerConfig *util.ControllerConfig, typeConfig typeconfig.Interface) (*KubeFedStatusController, error) {
-	federatedAPIResource := typeConfig.GetFederatedType()
-	statusAPIResource := typeConfig.GetStatusType()
+	federatedAPIResource := typeConfig.GetFederatedType() // Spec.FederatedType 联邦资源类型，比如FederatedService
+	statusAPIResource := typeConfig.GetStatusType()       // .Spec.StatusType，目前没有公开接口支持，需要手动patch
 	if statusAPIResource == nil {
 		return nil, errors.Errorf("Status collection is not supported for %q", federatedAPIResource.Kind)
 	}
@@ -134,7 +134,7 @@ func newKubeFedStatusController(controllerConfig *util.ControllerConfig, typeCon
 
 	targetNamespace := controllerConfig.TargetNamespace
 
-	targetAPIResource := typeConfig.GetTargetType()
+	targetAPIResource := typeConfig.GetTargetType() // 目标类型，比如 core/v1 Service
 	s.federatedStore, s.federatedController = util.NewResourceInformer(federatedTypeClient, targetNamespace, &targetAPIResource, enqueueObj)
 	s.statusStore, s.statusController = util.NewResourceInformer(statusClient, targetNamespace, statusAPIResource, enqueueObj)
 

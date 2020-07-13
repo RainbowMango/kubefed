@@ -215,7 +215,7 @@ func (f *FederatedTypeConfig) GetStatusType() *metav1.APIResource {
 	return &metaAPIResource
 }
 
-func (f *FederatedTypeConfig) GetStatusEnabled() bool {
+func (f *FederatedTypeConfig) GetStatusEnabled() bool { // 这里限定为'services'，是因为实验特性
 	return f.Spec.StatusCollection != nil &&
 		*f.Spec.StatusCollection == StatusCollectionEnabled &&
 		f.Name == "services"

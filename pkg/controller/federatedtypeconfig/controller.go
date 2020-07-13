@@ -227,7 +227,7 @@ func (c *Controller) reconcile(qualifiedName util.QualifiedName) util.Reconcilia
 
 	startNewStatusController := !statusRunning && statusEnabled
 	stopStatusController := statusRunning && !statusEnabled
-	if startNewStatusController {
+	if startNewStatusController { // 如果FederatedTypeConfig中，.spec.statusCollection值为‘Enabled’，则启动StatusController.
 		if err := c.startStatusController(statusKey, typeConfig); err != nil {
 			runtime.HandleError(err)
 			return util.StatusError
