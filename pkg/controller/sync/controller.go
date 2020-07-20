@@ -237,6 +237,8 @@ func (s *KubeFedSyncController) reconcile(qualifiedName util.QualifiedName) util
 		return util.StatusNotSynced
 	}
 
+	klog.Warningf("[JUSTFORDEBUG] KubeFedSyncController, reconcile. qualifiedName: %v", qualifiedName.String())
+
 	kind := s.typeConfig.GetFederatedType().Kind
 
 	fedResource, possibleOrphan, err := s.fedAccessor.FederatedResource(qualifiedName)
